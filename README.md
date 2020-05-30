@@ -13,6 +13,6 @@ The i-th(first) line in the regex file defines the regex to match and i+1th(seco
 
 I wanted to remove everything between <rt> tags because they mess up my text parsing software so my regex file looks like this:
 ```
-  <rt>(.*?)</rt>
-  
+<rt>(.*?)</rt>
+ 
 ```
