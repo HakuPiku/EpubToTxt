@@ -206,9 +206,7 @@ func readUserInput() inputParams {
 	if len(os.Args) == 3 {
 		regexFile = os.Args[2]
 	}
-	
-	fileName := string([]rune(filepath.Base(epubDir))[:len(filepath.Base(epubDir))-len(filepath.Ext(epubDir))])
-	outputFolder := filepath.Join(filepath.Dir(epubDir), fileName)
+	outputFolder := epubDir[:len(epubDir)-len(filepath.Ext(epubDir))]
 	return inputParams{epubDir, outputFolder, regexFile}
 
 }
