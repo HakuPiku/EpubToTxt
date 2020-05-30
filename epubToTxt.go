@@ -77,10 +77,7 @@ func main() {
 
 	//Save the txt file
 	createTextFile(inputParams.outputFolder+".txt", allText.String())
-	fmt.Printf("Saved to the text file. The whole process took %s", time.Since(start))
-
-	//Remove the zip File
-	os.RemoveAll(inputParams.outputFolder)
+	fmt.Printf("Saved to the text file : %s \r\n Conversion process took %s", inputParams.outputFolder+".txt", time.Since(start))
 
 }
 
