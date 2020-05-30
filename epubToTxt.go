@@ -111,6 +111,9 @@ func createTextFile(filePath, text string) {
 func readRegexFile(regexFile string) []regexValues {
 
 	var regexes []regexValues
+	if regexFile == "" {
+		return nil
+	}
 	file, err := os.Open(regexFile)
 	checkError(err)
 
@@ -143,10 +146,11 @@ func readHTMLFiles(src *zip.ReadCloser, fileList []string, regexes []regexValues
 	for _, file := range fileList {
 		htmlCon, err := readFileFromZip(src, file)
 		htmlContent := []byte(htmlCon)
-		for _, regex := range regexes {
-			htmlContent = applyRegex(regex, (htmlContent))
+		if regexes != nil {
+			for _, regex := range regexes {
+				htmlContent = applyRegex(regex, (htmlContent))
+			}
 		}
-
 		doc, err := goquery.NewDocumentFromReader(strings.NewReader(string(htmlContent)))
 		checkError(err)
 
@@ -198,7 +202,10 @@ func getContainerData(src *zip.ReadCloser) containerXMLParams {
 
 func readUserInput() inputParams {
 
-	epubDir, regexFile := os.Args[1], os.Args[2]
+	epubDir, regexFile := os.Args[1], ""
+	if len(os.Args) == 3 {
+		regexFile = os.Args[2]
+	}
 	fileName := string([]rune(epubDir)[:len(epubDir)-5])
 	outputFolder := filepath.Join(filepath.Dir(epubDir), fileName)
 	return inputParams{epubDir, outputFolder, regexFile}
