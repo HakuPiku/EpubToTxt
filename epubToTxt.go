@@ -5,6 +5,7 @@ import (
 	"bufio"
 	"encoding/xml"
 	"errors"
+	"flag"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
 	"io"
@@ -202,13 +203,12 @@ func getContainerData(src *zip.ReadCloser) containerXMLParams {
 
 func readUserInput() inputParams {
 
-	epubDir, regexFile := os.Args[1], ""
-	if len(os.Args) == 3 {
-		regexFile = os.Args[2]
-	}
-	outputFolder := epubDir[:len(epubDir)-len(filepath.Ext(epubDir))]
-	return inputParams{epubDir, outputFolder, regexFile}
+	epubDir := flag.String("epub", "", "a string")
+	regexFile := flag.String("regex", "", "a string")
+	flag.Parse()
+	outputFolder := (*epubDir)[:len(*epubDir)-len(filepath.Ext(*epubDir))]
 
+	return inputParams{*epubDir, outputFolder, *regexFile}
 }
 
 func checkError(err error) {
