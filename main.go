@@ -7,14 +7,14 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"github.com/PuerkitoBio/goquery"
 	"io"
 	"log"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
-	"time"
+
+	"github.com/PuerkitoBio/goquery"
 )
 
 type inputParams struct {
@@ -48,12 +48,12 @@ type opfXMLParams struct {
 }
 
 type regexValues struct {
-	expression  string
+	pattern     string
 	replacement string
 }
 
 func main() {
-	start := time.Now()
+	//start := time.Now()
 
 	// read Arguments
 	inputParams := readUserInput()
@@ -78,7 +78,8 @@ func main() {
 
 	//Save the txt file
 	createTextFile(inputParams.outputFolder+".txt", allText.String())
-	fmt.Printf("Saved to the text file : %s \r\n Conversion process took %s", inputParams.outputFolder+".txt", time.Since(start))
+	//fmt.Printf("Saved to the text file : %s \r\n Conversion process took %s", inputParams.outputFolder+".txt", time.Since(start))
+	fmt.Printf("Saved to the text file : %s \r\n ", inputParams.outputFolder+".txt")
 
 }
 
@@ -99,11 +100,12 @@ func readFileFromZip(src *zip.ReadCloser, path string) (string, error) {
 }
 
 func createTextFile(filePath, text string) {
-	f, err := os.Create(filePath)
+	file, err := os.Create(filePath)
+	defer file.Close()
 	if err != nil {
 		log.Fatal(err)
 	}
-	_, err = f.WriteString(text)
+	_, err = file.WriteString(text)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -116,9 +118,8 @@ func readRegexFile(regexFile string) []regexValues {
 		return nil
 	}
 	file, err := os.Open(regexFile)
-	checkError(err)
-
 	defer file.Close()
+	checkError(err)
 
 	scanner := bufio.NewScanner(file)
 	i := 0
@@ -137,15 +138,15 @@ func readRegexFile(regexFile string) []regexValues {
 }
 
 func applyRegex(regex regexValues, doc []byte) []byte {
-	re := regexp.MustCompile(regex.expression)
+	re := regexp.MustCompile(regex.pattern)
 	return re.ReplaceAll(doc, []byte(regex.replacement))
 }
 
 func readHTMLFiles(src *zip.ReadCloser, fileList []string, regexes []regexValues) strings.Builder {
-
 	var allData strings.Builder
 	for _, file := range fileList {
 		htmlCon, err := readFileFromZip(src, file)
+		checkError(err)
 		htmlContent := []byte(htmlCon)
 		if regexes != nil {
 			for _, regex := range regexes {
@@ -163,7 +164,6 @@ func readHTMLFiles(src *zip.ReadCloser, fileList []string, regexes []regexValues
 }
 
 func getHTMLFileList(opfData opfXMLParams, opfFileDir string) []string {
-
 	var fileList []string
 	for _, idref := range opfData.Spine.ItemRefs {
 		for _, item := range opfData.Manifest.Items {
@@ -177,7 +177,6 @@ func getHTMLFileList(opfData opfXMLParams, opfFileDir string) []string {
 }
 
 func getOPFData(src *zip.ReadCloser, opfFilePath string) opfXMLParams {
-
 	opfContent, err := readFileFromZip(src, opfFilePath)
 	checkError(err)
 
@@ -189,7 +188,6 @@ func getOPFData(src *zip.ReadCloser, opfFilePath string) opfXMLParams {
 }
 
 func getContainerData(src *zip.ReadCloser) containerXMLParams {
-
 	containerFile := filepath.Join("META-INF", "container.xml")
 	containerContent, err := readFileFromZip(src, containerFile)
 	checkError(err)
@@ -202,17 +200,25 @@ func getContainerData(src *zip.ReadCloser) containerXMLParams {
 }
 
 func readUserInput() inputParams {
-
 	epubDir := flag.String("epub", "", "a string")
 	regexFile := flag.String("regex", "", "a string")
+	outputFolder := flag.String("output", "", "a string")
 	flag.Parse()
-	outputFolder := (*epubDir)[:len(*epubDir)-len(filepath.Ext(*epubDir))]
+	if filepath.Ext(*epubDir) != ".epub" {
+		log.Fatal("Not a valid epub file!")
+	}
 
-	return inputParams{*epubDir, outputFolder, *regexFile}
+	fileName := (*epubDir)[:len(*epubDir)-len(filepath.Ext(*epubDir))]
+	inputParams := inputParams{epubDir: *epubDir, regexFile: *regexFile}
+	if *outputFolder == "" {
+		inputParams.outputFolder = fileName
+	} else {
+		inputParams.outputFolder = filepath.Join(*outputFolder, fileName)
+	}
+	return inputParams
 }
 
 func checkError(err error) {
-
 	if err != nil {
 		log.Fatal(err)
 	}
